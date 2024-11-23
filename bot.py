@@ -32,8 +32,7 @@ async def start(client, message):
         "**عِمشہ رحمان** ke tamam parts dekhne ke liye neeche diye gaye button par click karein. 💖✨\n\n"
         "👇👇👇👇👇👇👇👇👇👇\n\n"
         "✨ **Aur agar aap aur videos dekhna chahte hain toh, yeh link join karein!** 🔥🔥\n\n"
-        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink) \n\n"
-        "✨ **Phir se join karein yeh link** 🔥🔥\n\n"
+        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink)\n\n"
         "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink)\n\n"
         "👉 **Join karo aur maze le lo!** 😘"
     )
