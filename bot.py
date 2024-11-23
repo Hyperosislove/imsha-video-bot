@@ -26,11 +26,16 @@ def create_keyboard():
 @bot.on_message(filters.command("start"))
 async def start(client, message):
     text = (
-        "**🌟 Imsha Rehman 🌟**\n\n"
-        "**❤️ Full video available!** Click on the button below to watch the complete video. All parts are just a tap away! 😘🔥🔥🥵🫦🍑\n\n"
+        "🌟 **Imsha Rehman** 🌟\n\n"
+        "❤️ **Full video available!** Click on the button below to watch the complete video. All parts are just a tap away! 😘🔥🔥🥵🫦🍑\n\n"
         "👇👇👇👇👇👇👇👇👇👇\n\n"
         "**عِمشہ رحمان** ke tamam parts dekhne ke liye neeche diye gaye button par click karein. 💖✨\n\n"
-        "👇👇👇👇👇👇👇👇👇👇"
+        "👇👇👇👇👇👇👇👇👇👇\n\n"
+        "✨ **Aur agar aap aur videos dekhna chahte hain toh, yeh link join karein!** 🔥🔥\n\n"
+        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink) \n\n"
+        "✨ **Phir se join karein yeh link** 🔥🔥\n\n"
+        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink)\n\n"
+        "👉 **Join karo aur maze le lo!** 😘"
     )
     await message.reply(text, reply_markup=create_keyboard())
 
