@@ -1,5 +1,6 @@
 import os
-from pyrogram import Client, filters
+from pyrogram import Client, filters, Command
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pymongo import MongoClient
 
 # Environment variables
@@ -39,7 +40,7 @@ def get_user_points(user_id):
 def get_referral_link(bot_username, user_id):
     return f"https://t.me/{bot_username}?start={user_id}"
 
-@bot.on_message(filters.command("start"))
+@bot.on_message(Command(["start", "help"], descriptions="Start the bot or get help"))
 async def start(client, message):
     bot_username = (await bot.get_me()).username
     user_id = message.from_user.id
@@ -66,40 +67,71 @@ async def start(client, message):
         f"🌟 **Welcome, {message.from_user.first_name}!** 🌟\n\n"
         "**How to Unlock All Content?**\n"
         "Invite your friends to use this bot. For every friend who joins using your referral link, you'll earn **1 point**.\n\n"
-        "📌 **Referral Link:**\n{referral_link}\n\n"
         f"🎁 **Your Current Points:** {points}\n\n"
-        "🔓 **Unlock Content:** Earn 1 point to unlock all content!"
+        "🔓 **Unlock Content:** Earn 1 point to unlock all content!" 
     )
-    await message.reply(text)
+    
+    # Add a keyboard markup with ALL buttons visible
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🎁 Check Points", callback_data="check_points")],
+        [InlineKeyboardButton("🔗 Referral Link", callback_data="referral_link")], 
+        [InlineKeyboardButton("🔓 Unlock Content", callback_data="unlock_content")],
+        [InlineKeyboardButton("❓ Help", callback_data="help")] 
+    ])
+    await message.reply(text, reply_markup=keyboard)
 
-@bot.on_message(filters.command("points"))
-async def check_points(client, message):
-    user_id = message.from_user.id
-    points = get_user_points(user_id)
-    await message.reply(
-        f"🎁 **Your Current Points:** {points}\n\n"
-        "📢 **Invite more friends to earn points.** Use your referral link to unlock content!"
-    )
-
-@bot.on_message(filters.command("unlock"))
-async def unlock_content(client, message):
-    user_id = message.from_user.id
-    points = get_user_points(user_id)
-
-    if points >= 1:
-        await message.reply(
-            "🎉 **Congratulations! You have unlocked all content.**\n\n"
-            "**Access Links:**\n"
-            "- Content 1: [Link](https://example.com/1)\n"
-            "- Content 2: [Link](https://example.com/2)\n"
-            "- Content 3: [Link](https://example.com/3)\n"
-            "\nKeep inviting friends to enjoy more rewards!"
+@bot.on_callback_query()
+async def callback_handler(client, callback_query):
+    user_id = callback_query.from_user.id 
+    if callback_query.data == "check_points":
+        points = get_user_points(user_id)
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"🎁 **Your Current Points:** {points}\n\n"
+            "📢 **Invite more friends to earn points.** Use your referral link to unlock content!"
         )
-    else:
-        await message.reply(
-            "❌ **You don't have enough points to unlock content.**\n\n"
-            "📢 **Earn 1 point by inviting your friends using your referral link.**"
+    elif callback_query.data == "referral_link":
+        bot_username = (await bot.get_me()).username
+        referral_link = get_referral_link(bot_username, user_id)
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"🔗 **Your Referral Link:** \n{referral_link}"
         )
+    elif callback_query.data == "unlock_content":
+        points = get_user_points(user_id)
+
+        if points >= 1:
+            await bot.send_message(
+                callback_query.from_user.id,
+                "🎉 **Congratulations! You have unlocked all content.**\n\n"
+                "**Access Links:**\n"
+                "- Content 1: [Link](https://example.com/1)\n"
+                "- Content 2: [Link](https://example.com/2)\n"
+                "- Content 3: [Link](https://example.com/3)\n"
+                "\nKeep inviting friends to enjoy more rewards!"
+            )
+        else:
+            await bot.send_message(
+                callback_query.from_user.id,
+                "❌ **You don't have enough points to unlock content.**\n\n"
+                "📢 **Earn 1 point by inviting your friends using your referral link.**"
+            )
+    elif callback_query.data == "help":
+        await bot.send_message(
+            callback_query.from_user.id,
+            "**Here's how to use this bot:**\n\n"
+            "1. **Invite friends:** Share your referral link with friends.\n"
+            "2. **Earn points:** Get 1 point for each friend who joins.\n"
+            "3. **Unlock content:** Use your points to unlock exclusive content.\n\n"
+            "**Commands:**\n"
+            "/start - Start the bot\n"
+            "/points - Check your points\n"
+            "/unlock - Unlock content\n"
+            "/help - Get help"
+        )
+
+    await callback_query.answer() # Acknowledge the callback query
 
 if __name__ == "__main__":
     bot.run()
+    
