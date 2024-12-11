@@ -1,46 +1,105 @@
 import os
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pymongo import MongoClient
 
-# Fetch sensitive info from environment variables
+# Environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
+MONGO_URI = os.getenv("MONGO_URI")
 
 # Initialize bot client
-bot = Client("video_link_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+bot = Client("referral_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# Function to create inline keyboard with buttons
-def create_keyboard():
-    buttons = [
-        [InlineKeyboardButton("PART1 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART2 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART3 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART4 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART5 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART6 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")],
-        [InlineKeyboardButton("PART7 🔞", url="https://t.me/PAWSOG_bot/PAWS?startapp=2CCfBLTA")]
-    ]
-    return InlineKeyboardMarkup(buttons)
+# MongoDB setup
+client = MongoClient(MONGO_URI)
+db = client["referral_bot"]
+users_collection = db["users"]
+
+def add_user(user_id, referred_by=None):
+    # Add user if not already exists
+    if not users_collection.find_one({"user_id": user_id}):
+        user_data = {
+            "user_id": user_id,
+            "points": 0,
+            "referred_by": referred_by,
+        }
+        users_collection.insert_one(user_data)
+        # Increment points for the referrer
+        if referred_by:
+            users_collection.update_one(
+                {"user_id": referred_by},
+                {"$inc": {"points": 1}}
+            )
+
+def get_user_points(user_id):
+    user = users_collection.find_one({"user_id": user_id})
+    return user["points"] if user else 0
+
+def get_referral_link(bot_username, user_id):
+    return f"https://t.me/{bot_username}?start={user_id}"
 
 @bot.on_message(filters.command("start"))
 async def start(client, message):
-    text = (
-        "🌟 **Imsha Rehman** 🌟\n\n"
-        "❤️ **Full video available!** Click on the button below to watch the complete video. All parts are just a tap away! 😘🔥🔥🥵🫦🍑\n\n"
-        "👇👇👇👇👇👇👇👇👇👇\n\n"
-        "**عِمشہ رحمان** ke tamam parts dekhne ke liye neeche diye gaye button par click karein. 💖✨\n\n"
-        "👇👇👇👇👇👇👇👇👇👇\n\n"
-        "✨ **Aur agar aap aur videos dekhna chahte hain toh, yeh link join karein!** 🔥🔥\n\n"
-        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink)\n\n"
-        "👉 [https://t.me/imsha_rehman_allpartslink](https://t.me/imsha_rehman_allpartslink)\n\n"
-        "👉 **Join karo aur maze le lo!** 😘"
-    )
-    await message.reply(text, reply_markup=create_keyboard())
+    bot_username = (await bot.get_me()).username
+    user_id = message.from_user.id
+    referred_by = None
 
-@bot.on_message(filters.command("menu"))
-async def menu(client, message):
-    await message.reply("Menu:\n/start - Start the bot")
+    # If the user starts with a referral link
+    if len(message.command) > 1:
+        try:
+            referred_by = int(message.command[1])
+        except ValueError:
+            pass
+
+    # Add user to the database
+    add_user(user_id, referred_by)
+
+    # Fetch user's points
+    points = get_user_points(user_id)
+
+    # Generate referral link
+    referral_link = get_referral_link(bot_username, user_id)
+
+    # Message to user
+    text = (
+        f"🌟 **Welcome, {message.from_user.first_name}!** 🌟\n\n"
+        "**How to Unlock All Content?**\n"
+        "Invite your friends to use this bot. For every friend who joins using your referral link, you'll earn **1 point**.\n\n"
+        "📌 **Referral Link:**\n{referral_link}\n\n"
+        f"🎁 **Your Current Points:** {points}\n\n"
+        "🔓 **Unlock Content:** Earn 1 point to unlock all content!"
+    )
+    await message.reply(text)
+
+@bot.on_message(filters.command("points"))
+async def check_points(client, message):
+    user_id = message.from_user.id
+    points = get_user_points(user_id)
+    await message.reply(
+        f"🎁 **Your Current Points:** {points}\n\n"
+        "📢 **Invite more friends to earn points.** Use your referral link to unlock content!"
+    )
+
+@bot.on_message(filters.command("unlock"))
+async def unlock_content(client, message):
+    user_id = message.from_user.id
+    points = get_user_points(user_id)
+
+    if points >= 1:
+        await message.reply(
+            "🎉 **Congratulations! You have unlocked all content.**\n\n"
+            "**Access Links:**\n"
+            "- Content 1: [Link](https://example.com/1)\n"
+            "- Content 2: [Link](https://example.com/2)\n"
+            "- Content 3: [Link](https://example.com/3)\n"
+            "\nKeep inviting friends to enjoy more rewards!"
+        )
+    else:
+        await message.reply(
+            "❌ **You don't have enough points to unlock content.**\n\n"
+            "📢 **Earn 1 point by inviting your friends using your referral link.**"
+        )
 
 if __name__ == "__main__":
     bot.run()
