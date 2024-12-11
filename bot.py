@@ -1,7 +1,9 @@
 import os
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pymongo import MongoClient
+from pyrogram.errors import FloodWait
 
 # Environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -18,6 +20,14 @@ db = client["premium_x_hub"]
 users_collection = db["users"]
 
 # Helper functions
+async def send_message_with_retry(chat_id, text, **kwargs):
+    try:
+        await bot.send_message(chat_id, text, **kwargs)
+    except FloodWait as e:
+        print(f"FloodWait triggered: Waiting for {e.value} seconds before retrying.")
+        await asyncio.sleep(e.value)
+        await bot.send_message(chat_id, text, **kwargs)
+
 def add_user(user_id, referred_by=None):
     if not users_collection.find_one({"user_id": user_id}):
         user_data = {
@@ -32,14 +42,13 @@ def add_user(user_id, referred_by=None):
                 {"$inc": {"points": 2}}  # Referral reward is 2 points
             )
             # Notify the referrer
-            try:
-                bot.send_message(
+            asyncio.create_task(
+                send_message_with_retry(
                     referred_by,
                     f"🎉 **Someone joined using your referral link!**\n\n"
                     "You earned **2 points**! Keep sharing your link to earn more points."
                 )
-            except Exception as e:
-                print(f"Error notifying referrer: {e}")
+            )
 
 def get_user_points(user_id):
     user = users_collection.find_one({"user_id": user_id})
@@ -142,7 +151,7 @@ async def callback_handler(client, callback_query):
 
     elif callback_query.data == "referral_link":
         referral_link = get_referral_link(bot_username, user_id)
-        await bot.send_message(
+        await send_message_with_retry(
             callback_query.from_user.id,
             f"🔗 **Your Referral Link:**\n{referral_link}\n\n"
             "🎁 **Your Options:**",
@@ -154,7 +163,7 @@ async def callback_handler(client, callback_query):
 
     elif callback_query.data == "check_points":
         points = get_user_points(user_id)
-        await bot.send_message(
+        await send_message_with_retry(
             callback_query.from_user.id,
             f"🎁 **Your Current Points:** {points}\n\n"
             "📢 **You need 5 points to unlock premium content.** Keep inviting your friends to earn more points.",
@@ -165,7 +174,7 @@ async def callback_handler(client, callback_query):
         )
 
     elif callback_query.data == "help":
-        await bot.send_message(
+        await send_message_with_retry(
             callback_query.from_user.id,
             "**Here's how to use Premium X Hub Bot:**\n\n"
             "1. **Browse Categories**: Explore premium content in different categories.\n"
