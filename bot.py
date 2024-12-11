@@ -28,7 +28,7 @@ def add_user(user_id, referred_by=None):
         if referred_by:
             users_collection.update_one(
                 {"user_id": referred_by},
-                {"$inc": {"points": 1}}
+                {"$inc": {"points": 2}}  # Referral reward updated to 2 points
             )
 
 def get_user_points(user_id):
@@ -101,7 +101,7 @@ async def callback_handler(client, callback_query):
     elif callback_query.data in ["onlyfans", "pornhub", "tiktok", "exclusive", "vip"]:
         points = get_user_points(user_id)
 
-        if points >= 10:
+        if points >= 5:  # Points requirement updated to 5
             # Unlock content
             text = f"🎉 **You've unlocked {callback_query.data.capitalize()} Content!**\n\n" \
                    "Enjoy premium content:\n" \
@@ -116,9 +116,9 @@ async def callback_handler(client, callback_query):
         else:
             text = (
                 "❌ **You don't have enough points to unlock this content.**\n\n"
-                "📢 **To unlock this content, you need 10 points.**\n\n"
+                "📢 **To unlock this content, you need 5 points.**\n\n"
                 "🎁 **How to earn points?**\n"
-                "Invite your friends to join this bot using your referral link. For every friend who joins, you'll earn **1 point**!\n\n"
+                "Invite your friends to join this bot using your referral link. For every friend who joins, you'll earn **2 points**!\n\n"
                 "🎁 **Your Options:**"
             )
             keyboard = InlineKeyboardMarkup([
@@ -146,7 +146,7 @@ async def callback_handler(client, callback_query):
         await bot.send_message(
             callback_query.from_user.id,
             f"🎁 **Your Current Points:** {points}\n\n"
-            "📢 **You need 10 points to unlock premium content.** Keep inviting your friends to earn more points.",
+            "📢 **You need 5 points to unlock premium content.** Keep inviting your friends to earn more points.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔗 Get Your Referral Link", callback_data="referral_link")],
                 [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
@@ -158,8 +158,8 @@ async def callback_handler(client, callback_query):
             callback_query.from_user.id,
             "**Here's how to use Premium X Hub Bot:**\n\n"
             "1. **Browse Categories**: Explore premium content in different categories.\n"
-            "2. **Earn Points**: Share your referral link and earn 1 point for each friend who joins.\n"
-            "3. **Unlock Content**: Use 10 points to unlock premium content in various categories.\n\n"
+            "2. **Earn Points**: Share your referral link and earn 2 points for each friend who joins.\n"
+            "3. **Unlock Content**: Use 5 points to unlock premium content in various categories.\n\n"
             "**Commands:**\n"
             "/start - Start the bot\n"
             "/help - Get help",
