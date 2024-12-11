@@ -1,5 +1,5 @@
 import os
-from pyrogram import Client, filters, Command
+from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pymongo import MongoClient
 
@@ -40,16 +40,16 @@ def get_user_points(user_id):
 def get_referral_link(bot_username, user_id):
     return f"https://t.me/{bot_username}?start={user_id}"
 
-@bot.on_message(Command(["start", "help"], descriptions="Start the bot or get help"))
+@bot.on_message(filters.command(["start", "help"]))
 async def start(client, message):
     bot_username = (await bot.get_me()).username
     user_id = message.from_user.id
     referred_by = None
 
     # If the user starts with a referral link
-    if len(message.command) > 1:
+    if len(message.text.split()) > 1:
         try:
-            referred_by = int(message.command[1])
+            referred_by = int(message.text.split()[1])
         except ValueError:
             pass
 
@@ -134,4 +134,3 @@ async def callback_handler(client, callback_query):
 
 if __name__ == "__main__":
     bot.run()
-    
