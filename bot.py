@@ -10,15 +10,14 @@ API_HASH = os.getenv("API_HASH")
 MONGO_URI = os.getenv("MONGO_URI")
 
 # Initialize bot client
-bot = Client("referral_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+bot = Client("premium_x_hub_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # MongoDB setup
 client = MongoClient(MONGO_URI)
-db = client["referral_bot"]
+db = client["premium_x_hub"]
 users_collection = db["users"]
 
 def add_user(user_id, referred_by=None):
-    # Add user if not already exists
     if not users_collection.find_one({"user_id": user_id}):
         user_data = {
             "user_id": user_id,
@@ -26,7 +25,6 @@ def add_user(user_id, referred_by=None):
             "referred_by": referred_by,
         }
         users_collection.insert_one(user_data)
-        # Increment points for the referrer
         if referred_by:
             users_collection.update_one(
                 {"user_id": referred_by},
@@ -46,98 +44,131 @@ async def start(client, message):
     user_id = message.from_user.id
     referred_by = None
 
-    # If the user starts with a referral link
     if len(message.text.split()) > 1:
         try:
             referred_by = int(message.text.split()[1])
         except ValueError:
             pass
 
-    # Add user to the database
     add_user(user_id, referred_by)
 
-    # Fetch user's points
-    points = get_user_points(user_id)
-
-    # Generate referral link
-    referral_link = get_referral_link(bot_username, user_id)
-
-    # Image URL (use the correct image URL here)
-    image_url = "https://i.imgur.com/0KLPahJ.jpg"  # Correct image URL
-
-    # Message to user
     text = (
-        f"🌟 **Welcome, {message.from_user.first_name}!** 🌟\n\n"
-        "Explore exclusive premium content and enjoy exciting rewards!\n\n"
-        f"🎁 **Your Current Points:** {points}\n\n"
-        "Unlock premium content and enjoy a variety of offers."
+        f"🌟 **Welcome to Premium X Hub, {message.from_user.first_name}!** 🌟\n\n"
+        "🎉 **Get ready to explore premium content** from top platforms like:\n"
+        "- **OnlyFans Premium**\n"
+        "- **Pornhub Premium**\n"
+        "- **TikTok Videos**\n"
+        "- **Exclusive VIP Content**\n"
+        "- **And much more!** 🔥\n\n"
+        "✨ **What’s Inside?**\n"
+        "- A wide range of exciting, high-quality videos and content waiting for you.\n"
+        "- **No subscriptions required**, just instant access to everything!\n\n"
+        "🎁 **Your Options:**\n"
     )
 
-    # Send the welcome message with the image
-    await bot.send_photo(message.chat.id, image_url, caption=text)
-
-    # Add a keyboard markup with all options visible
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎁 Check Points", callback_data="check_points")],
-        [InlineKeyboardButton("🔗 Referral Link", callback_data="referral_link")], 
-        [InlineKeyboardButton("🔓 Unlock Content", callback_data="unlock_content")],
-        [InlineKeyboardButton("❓ Help", callback_data="help")] 
+        [InlineKeyboardButton("📂 Browse Content Categories", callback_data="browse_categories")],
+        [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
     ])
-    
-    # Send the buttons as a reply to the user
+
     await message.reply(text, reply_markup=keyboard)
 
 @bot.on_callback_query()
 async def callback_handler(client, callback_query):
-    user_id = callback_query.from_user.id 
-    if callback_query.data == "check_points":
+    user_id = callback_query.from_user.id
+    bot_username = (await bot.get_me()).username
+
+    if callback_query.data == "browse_categories":
+        text = (
+            "📂 **Choose a category to explore:**\n\n"
+            "1️⃣ **OnlyFans Premium**\n"
+            "2️⃣ **Pornhub Premium**\n"
+            "3️⃣ **TikTok Videos**\n"
+            "4️⃣ **Exclusive Content**\n"
+            "5️⃣ **VIP Content Access**\n\n"
+            "🎁 **Your Options:**\n"
+        )
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("1️⃣ OnlyFans Premium", callback_data="onlyfans")],
+            [InlineKeyboardButton("2️⃣ Pornhub Premium", callback_data="pornhub")],
+            [InlineKeyboardButton("3️⃣ TikTok Videos", callback_data="tiktok")],
+            [InlineKeyboardButton("4️⃣ Exclusive Content", callback_data="exclusive")],
+            [InlineKeyboardButton("5️⃣ VIP Content Access", callback_data="vip")],
+            [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+        ])
+        await callback_query.message.edit(text, reply_markup=keyboard)
+
+    elif callback_query.data in ["onlyfans", "pornhub", "tiktok", "exclusive", "vip"]:
+        points = get_user_points(user_id)
+
+        if points >= 10:
+            # Unlock content
+            text = f"🎉 **You've unlocked {callback_query.data.capitalize()} Content!**\n\n" \
+                   "Enjoy premium content:\n" \
+                   "- 🔥 [Link 1](https://example.com/1)\n" \
+                   "- 🔥 [Link 2](https://example.com/2)\n" \
+                   "- 🔥 [Link 3](https://example.com/3)\n\n" \
+                   "🎁 **Your Options:**"
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("📂 Browse Content Categories", callback_data="browse_categories")],
+                [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+            ])
+        else:
+            text = (
+                "❌ **You don't have enough points to unlock this content.**\n\n"
+                "📢 **To unlock this content, you need 10 points.**\n\n"
+                "🎁 **How to earn points?**\n"
+                "Invite your friends to join this bot using your referral link. For every friend who joins, you'll earn **1 point**!\n\n"
+                "🎁 **Your Options:**"
+            )
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔗 Get Your Referral Link", callback_data="referral_link")],
+                [InlineKeyboardButton("🎯 Check Your Points", callback_data="check_points")],
+                [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+            ])
+
+        await callback_query.message.edit(text, reply_markup=keyboard)
+
+    elif callback_query.data == "referral_link":
+        referral_link = get_referral_link(bot_username, user_id)
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"🔗 **Your Referral Link:**\n{referral_link}\n\n"
+            "🎁 **Your Options:**",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎯 Check Your Points", callback_data="check_points")],
+                [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+            ])
+        )
+
+    elif callback_query.data == "check_points":
         points = get_user_points(user_id)
         await bot.send_message(
             callback_query.from_user.id,
             f"🎁 **Your Current Points:** {points}\n\n"
-            "📢 **Invite more friends to earn points.** Use your referral link to unlock content."
+            "📢 **You need 10 points to unlock premium content.** Keep inviting your friends to earn more points.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔗 Get Your Referral Link", callback_data="referral_link")],
+                [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+            ])
         )
-    elif callback_query.data == "referral_link":
-        bot_username = (await bot.get_me()).username
-        referral_link = get_referral_link(bot_username, user_id)
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"🔗 **Your Referral Link:** \n{referral_link}"
-        )
-    elif callback_query.data == "unlock_content":
-        points = get_user_points(user_id)
 
-        if points >= 10:
-            await bot.send_message(
-                callback_query.from_user.id,
-                "🎉 **Congratulations! You have unlocked exclusive content.**\n\n"
-                "🔗 Here are your premium content links:\n"
-                "- [Content 1](https://example.com/1)\n"
-                "- [Content 2](https://example.com/2)\n"
-                "- [Content 3](https://example.com/3)\n"
-                "\nEnjoy your content and keep inviting to earn more rewards!"
-            )
-        else:
-            await bot.send_message(
-                callback_query.from_user.id,
-                "❌ **You don't have enough points to unlock this content.**\n\n"
-                "📢 **Earn 10 points by inviting your friends using your referral link!**"
-            )
     elif callback_query.data == "help":
         await bot.send_message(
             callback_query.from_user.id,
-            "**Here's how to use this bot:**\n\n"
-            "1. **Invite friends:** Share your referral link with friends.\n"
-            "2. **Earn points:** Get 1 point for each friend who joins.\n"
-            "3. **Unlock content:** Use 10 points to unlock exclusive content.\n\n"
+            "**Here's how to use Premium X Hub Bot:**\n\n"
+            "1. **Browse Categories**: Explore premium content in different categories.\n"
+            "2. **Earn Points**: Share your referral link and earn 1 point for each friend who joins.\n"
+            "3. **Unlock Content**: Use 10 points to unlock premium content in various categories.\n\n"
             "**Commands:**\n"
             "/start - Start the bot\n"
-            "/points - Check your points\n"
-            "/unlock - Unlock content\n"
-            "/help - Get help"
+            "/help - Get help",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎯 Need Help?", callback_data="help")]
+            ])
         )
 
-    await callback_query.answer()  # Acknowledge the callback query
+    await callback_query.answer()
 
 if __name__ == "__main__":
     bot.run()
