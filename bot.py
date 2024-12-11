@@ -63,7 +63,7 @@ async def start(client, message):
     referral_link = get_referral_link(bot_username, user_id)
 
     # Image URL
-    image_url = "https://i.imgur.com/AYiaPht.jpg"  # Use the direct image URL
+    image_url = "https://i.imgur.com/0KLPahJ.jpg"  # Use the new image URL
 
     # Message to user
     text = (
@@ -73,7 +73,7 @@ async def start(client, message):
         f"🎁 **Your Current Points:** {points}\n\n"
         "Unlock exclusive content by earning points.\n"
     )
-    
+
     # Send the welcome message with the image
     await bot.send_photo(message.chat.id, image_url, caption=text)
 
