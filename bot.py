@@ -62,16 +62,15 @@ async def start(client, message):
     # Generate referral link
     referral_link = get_referral_link(bot_username, user_id)
 
-    # Image URL
-    image_url = "https://i.imgur.com/0KLPahJ.jpg"  # Use the new image URL
+    # Image URL (use the correct image URL here)
+    image_url = "https://i.imgur.com/0KLPahJ.jpg"  # Correct image URL
 
     # Message to user
     text = (
         f"🌟 **Welcome, {message.from_user.first_name}!** 🌟\n\n"
-        "**How to Unlock All Content?**\n"
-        "Explore premium content after earning points! Simply engage with the bot and enjoy exclusive offers.\n\n"
+        "Explore exclusive premium content and enjoy exciting rewards!\n\n"
         f"🎁 **Your Current Points:** {points}\n\n"
-        "Unlock exclusive content by earning points.\n"
+        "Unlock premium content and enjoy a variety of offers."
     )
 
     # Send the welcome message with the image
@@ -96,7 +95,7 @@ async def callback_handler(client, callback_query):
         await bot.send_message(
             callback_query.from_user.id,
             f"🎁 **Your Current Points:** {points}\n\n"
-            "📢 **Invite more friends to earn points.** Use your referral link to unlock content!"
+            "📢 **Invite more friends to earn points.** Use your referral link to unlock content."
         )
     elif callback_query.data == "referral_link":
         bot_username = (await bot.get_me()).username
@@ -112,17 +111,17 @@ async def callback_handler(client, callback_query):
             await bot.send_message(
                 callback_query.from_user.id,
                 "🎉 **Congratulations! You have unlocked exclusive content.**\n\n"
-                "**Access Links:**\n"
-                "- OnlyFans Premium: [Link](https://example.com/1)\n"
-                "- Pornhub Premium: [Link](https://example.com/2)\n"
-                "- TikTok Videos: [Link](https://example.com/3)\n"
-                "\nKeep inviting friends to enjoy more rewards!"
+                "🔗 Here are your premium content links:\n"
+                "- [Content 1](https://example.com/1)\n"
+                "- [Content 2](https://example.com/2)\n"
+                "- [Content 3](https://example.com/3)\n"
+                "\nEnjoy your content and keep inviting to earn more rewards!"
             )
         else:
             await bot.send_message(
                 callback_query.from_user.id,
-                "❌ **You don't have enough points to unlock content.**\n\n"
-                "📢 **Earn 10 points by inviting your friends using your referral link.**"
+                "❌ **You don't have enough points to unlock this content.**\n\n"
+                "📢 **Earn 10 points by inviting your friends using your referral link!**"
             )
     elif callback_query.data == "help":
         await bot.send_message(
@@ -138,7 +137,7 @@ async def callback_handler(client, callback_query):
             "/help - Get help"
         )
 
-    await callback_query.answer() # Acknowledge the callback query
+    await callback_query.answer()  # Acknowledge the callback query
 
 if __name__ == "__main__":
     bot.run()
