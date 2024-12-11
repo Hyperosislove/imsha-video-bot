@@ -17,6 +17,7 @@ client = MongoClient(MONGO_URI)
 db = client["premium_x_hub"]
 users_collection = db["users"]
 
+# Helper functions
 def add_user(user_id, referred_by=None):
     if not users_collection.find_one({"user_id": user_id}):
         user_data = {
@@ -28,8 +29,17 @@ def add_user(user_id, referred_by=None):
         if referred_by:
             users_collection.update_one(
                 {"user_id": referred_by},
-                {"$inc": {"points": 2}}  # Referral reward updated to 2 points
+                {"$inc": {"points": 2}}  # Referral reward is 2 points
             )
+            # Notify the referrer
+            try:
+                bot.send_message(
+                    referred_by,
+                    f"🎉 **Someone joined using your referral link!**\n\n"
+                    "You earned **2 points**! Keep sharing your link to earn more points."
+                )
+            except Exception as e:
+                print(f"Error notifying referrer: {e}")
 
 def get_user_points(user_id):
     user = users_collection.find_one({"user_id": user_id})
@@ -38,6 +48,7 @@ def get_user_points(user_id):
 def get_referral_link(bot_username, user_id):
     return f"https://t.me/{bot_username}?start={user_id}"
 
+# Command handlers
 @bot.on_message(filters.command(["start", "help"]))
 async def start(client, message):
     bot_username = (await bot.get_me()).username
@@ -101,7 +112,7 @@ async def callback_handler(client, callback_query):
     elif callback_query.data in ["onlyfans", "pornhub", "tiktok", "exclusive", "vip"]:
         points = get_user_points(user_id)
 
-        if points >= 5:  # Points requirement updated to 5
+        if points >= 5:  # Required points reduced to 5
             # Unlock content
             text = f"🎉 **You've unlocked {callback_query.data.capitalize()} Content!**\n\n" \
                    "Enjoy premium content:\n" \
